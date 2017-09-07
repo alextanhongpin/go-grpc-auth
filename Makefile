@@ -46,11 +46,18 @@ gw:
 	--grpc-gateway_out=logtostderr=true:. \
 	proto/*.proto
 
+sserve:
+	go run server/main.go -port :8080 -cert server.crt -key server.key 
+
 serve:
-	go run server/main.go
+	go run server/main.go -port :8080
+
+sproxy:
+	go run gateway/main.go -port :9090 -cert server.crt -addr localhost:8080
 
 proxy:
-	go run gateway/main.go
+	go run gateway/main.go -port :9090 -addr localhost:8080
+
 
 test: 
 	curl -XPOST -d '{"x":1,"y":2}' http://localhost:9090/v1/math/sum

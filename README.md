@@ -111,11 +111,21 @@ Getting Private key
 
 ## Run Server
 
-Now that you have both the cert and key, run `make serve` and `make proxy`.
+Now that you have both the cert and key, run `make sserve` and `make sproxy`. `sserve` stands for *secure-serve*,
+`ssproxy` for *secure-proxy*. 
 
 To test the output, run `make test`. You should get the following output:
 
 ```bash
 curl -XPOST -d '{"x":1,"y":2}' http://localhost:9090/v1/math/sum
 {"z":3}%
+```
+
+## Insecure server/gateway
+
+If the gateway is insecure and you try to make a call through `make test`, you should get the following error:
+
+```bash
+$ curl -XPOST -d '{"x":1,"y":2}' http://localhost:9090/v1/math/sum
+{"error":"transport is closing","code":14}%
 ```

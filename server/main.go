@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"log"
 	"net"
 
@@ -30,17 +30,38 @@ func (s *mathServer) Sum(ctx context.Context, req *pb.SumRequest) (*pb.SumRespon
 }
 
 func main() {
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%s", "8080"))
+	var (
+		port = flag.String("port", ":8080", "TCP address to listen on(in host:port form")
+		cert = flag.String("cert", "", "Path to PEM-encoded certificate")
+		key  = flag.String("key", "", "Path to PEM-encoded secret key")
+	)
+	flag.Parse()
+
+	lis, err := net.Listen("tcp", *port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	creds, err := credentials.NewServerTLSFromFile(crt, key)
-	if err != nil {
-		log.Println(err)
+
+	var grpcServer *grpc.Server
+
+	if *cert == "" && *key == "" {
+		log.Println("running insecure server")
+		grpcServer = grpc.NewServer()
+	} else if *cert == "" {
+		log.Fatalf("cert is not available")
+	} else if *key == "" {
+		log.Fatalf("key is not available")
+	} else {
+		log.Println("running secure server")
+		creds, err := credentials.NewServerTLSFromFile(*cert, *key)
+		if err != nil {
+			log.Println(err)
+		}
+		grpcServer = grpc.NewServer(grpc.Creds(creds))
 	}
-	grpcServer := grpc.NewServer(grpc.Creds(creds))
+
 	pb.RegisterMathServiceServer(grpcServer, &mathServer{})
-	log.Printf("listening to port *:%s\n", "8080")
+	log.Printf("listening to port *:%s\n", *port)
 	grpcServer.Serve(lis)
 
 }
