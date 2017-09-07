@@ -1,0 +1,21 @@
+syntax = "proto3";
+package hello;
+
+import "google/api/annotations.proto";
+
+message SumRequest {
+    float x = 1;
+    float y = 2;
+}
+message SumResponse {
+    float z = 1;
+}
+
+service MathService {
+    rpc Sum (SumRequest) returns (SumResponse) {
+        option (google.api.http) = {
+            post: "/v1/math/sum"
+            body: "*"
+        };
+    }
+}

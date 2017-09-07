@@ -1,7 +1,12 @@
 SERVER_KEY=server.key
 SERVER_CRT=server.crt
 SERVER_CSR=server.csr
-HOST_IP=172.16.21.215
+HOST_IP=localhost
+
+setup:
+	go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+	go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+	go get -u github.com/golang/protobuf/protoc-gen-go
 
 # Generate simple .key/.crt using openssl
 key:
@@ -17,7 +22,6 @@ csr:
 
 # Alternative is to use certstrap by Square
 # $ brew install certstrap
-
 certstrap:
 	# Create a new certificate authority
 	certstrap init --common-name alextanhongpin.com
@@ -27,3 +31,26 @@ certstrap:
 
 	# To generate the certificate for the host:
 	certstrap sign ${HOST_IP} --CA alextanhongpin.com
+
+stub:
+	protoc -I/usr/local/include -I. \
+	-I${GOPATH}/src \
+	-I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+	--go_out=plugins=grpc:. \
+	proto/*.proto
+
+gw:
+	protoc -I/usr/local/include -I. \
+	-I${GOPATH}/src \
+	-I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+	--grpc-gateway_out=logtostderr=true:. \
+	proto/*.proto
+
+serve:
+	go run server/main.go
+
+proxy:
+	go run gateway/main.go
+
+test: 
+	curl -XPOST -d '{"x":1,"y":2}' http://localhost:9090/v1/math/sum
